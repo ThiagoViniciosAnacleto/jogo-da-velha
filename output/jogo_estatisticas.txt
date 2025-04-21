@@ -1,0 +1,6 @@
+Thiago 5 1 0 0
+Thiago 12 2 0 0
+Thiago 10 2 0 0
+joao 5 1 0 0
+Igor 5 1 0 0
+Paulo 5 1 0 0
