@@ -1,8 +1,1 @@
-Thiago, 1, 1, 0, 0;
-Matheus, 1, 0, 0, 1;
-Thiago, 2, 2, 0, 0;
-Matheus, 2, 0, 0, 2;
-Thiago, 3, 3, 0, 0;
-Matheus, 3, 0, 0, 3;
-Matheus, 4, 0, 0, 4;
-Thiago, 4, 4, 0, 0;
+Thiago, 3, 2, 0, 1;

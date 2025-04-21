@@ -439,12 +439,97 @@ void salvarPartida(Jogo *jogo) {
     }
 }
 
+// Função refatorada para salvar estatísticas sobrescrevendo o arquivo
 void salvarEstatisticas(Jogador *jogador) {
-    FILE *arquivo = fopen(FILENAME, "a");
+    // Verificar se o jogador tem um nome válido
+    if (strlen(jogador->nome) == 0) return;
+    
+    // Array para armazenar todos os jogadores
+    Jogador jogadores[MAX_PLAYERS];
+    int numJogadores = 0;
+    int jogadorEncontrado = 0;
+    
+    // Ler o arquivo existente
+    FILE *arquivo = fopen(FILENAME, "r");
     if (arquivo) {
-        // Novo formato: "Nome, partidas, vitorias, empates, derrotas;"
-        fprintf(arquivo, "%s, %d, %d, %d, %d;\n",
-                jogador->nome, jogador->partidas, jogador->vitorias, jogador->empates, jogador->derrotas);
+        char linha[100];
+        while (fgets(linha, sizeof(linha), arquivo) && numJogadores < MAX_PLAYERS) {
+            // Remover quebra de linha
+            linha[strcspn(linha, "\n")] = '\0';
+            
+            // Extrair dados do jogador
+            char nome[MAX_NAME_LEN];
+            int partidas, vitorias, empates, derrotas;
+            
+            // Tentar ler no formato "Nome, partidas, vitorias, empates, derrotas;"
+            if (sscanf(linha, "%[^,], %d, %d, %d, %d;", 
+                      nome, &partidas, &vitorias, &empates, &derrotas) == 5) {
+                
+                // Verificar se é o jogador atual
+                if (strcmp(nome, jogador->nome) == 0) {
+                    // Atualizar com os novos dados
+                    strcpy(jogadores[numJogadores].nome, jogador->nome);
+                    jogadores[numJogadores].partidas = jogador->partidas;
+                    jogadores[numJogadores].vitorias = jogador->vitorias;
+                    jogadores[numJogadores].empates = jogador->empates;
+                    jogadores[numJogadores].derrotas = jogador->derrotas;
+                    jogadorEncontrado = 1;
+                } else {
+                    // Copiar os dados do jogador existente
+                    strcpy(jogadores[numJogadores].nome, nome);
+                    jogadores[numJogadores].partidas = partidas;
+                    jogadores[numJogadores].vitorias = vitorias;
+                    jogadores[numJogadores].empates = empates;
+                    jogadores[numJogadores].derrotas = derrotas;
+                }
+                numJogadores++;
+            }
+            // Tentar ler no formato antigo como fallback
+            else if (sscanf(linha, "%s - Partidas: %d, Vitorias: %d, Empates: %d, Derrotas: %d",
+                          nome, &partidas, &vitorias, &empates, &derrotas) == 5) {
+                
+                // Verificar se é o jogador atual
+                if (strcmp(nome, jogador->nome) == 0) {
+                    // Atualizar com os novos dados
+                    strcpy(jogadores[numJogadores].nome, jogador->nome);
+                    jogadores[numJogadores].partidas = jogador->partidas;
+                    jogadores[numJogadores].vitorias = jogador->vitorias;
+                    jogadores[numJogadores].empates = jogador->empates;
+                    jogadores[numJogadores].derrotas = jogador->derrotas;
+                    jogadorEncontrado = 1;
+                } else {
+                    // Copiar os dados do jogador existente
+                    strcpy(jogadores[numJogadores].nome, nome);
+                    jogadores[numJogadores].partidas = partidas;
+                    jogadores[numJogadores].vitorias = vitorias;
+                    jogadores[numJogadores].empates = empates;
+                    jogadores[numJogadores].derrotas = derrotas;
+                }
+                numJogadores++;
+            }
+        }
+        fclose(arquivo);
+    }
+    
+    // Se o jogador não foi encontrado, adicionar ao array
+    if (!jogadorEncontrado && numJogadores < MAX_PLAYERS) {
+        strcpy(jogadores[numJogadores].nome, jogador->nome);
+        jogadores[numJogadores].partidas = jogador->partidas;
+        jogadores[numJogadores].vitorias = jogador->vitorias;
+        jogadores[numJogadores].empates = jogador->empates;
+        jogadores[numJogadores].derrotas = jogador->derrotas;
+        numJogadores++;
+    }
+    
+    // Reescrever o arquivo com todos os jogadores
+    arquivo = fopen(FILENAME, "w");
+    if (arquivo) {
+        for (int i = 0; i < numJogadores; i++) {
+            fprintf(arquivo, "%s, %d, %d, %d, %d;\n",
+                    jogadores[i].nome, jogadores[i].partidas, 
+                    jogadores[i].vitorias, jogadores[i].empates, 
+                    jogadores[i].derrotas);
+        }
         fclose(arquivo);
     }
 }
