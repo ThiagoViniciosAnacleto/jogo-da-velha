@@ -426,7 +426,6 @@ void salvarCredenciais(const char *nome, const char *senha) {
 void realizarLogin(Jogador *jogador) {
     char nome[MAX_NAME_LEN];
     char senha[MAX_PASS_LEN];
-    int tentativas = 0;
     int opcao;
     
     printf("Digite seu nome: ");
