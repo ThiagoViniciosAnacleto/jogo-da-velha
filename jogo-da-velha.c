@@ -4,6 +4,7 @@
 #include <conio.h>
 #include <windows.h>
 #include <locale.h>
+#include <time.h>  // Para funções de tempo
 
 #define MAX_NAME_LEN 50
 #define MAX_PASS_LEN 50
@@ -12,6 +13,8 @@
 #define LOGIN_FILE "logins.txt"
 #define PARTIDA_FILE "partida_em_andamento.txt"
 #define MAX_TENTATIVAS 3  // Constante para o número máximo de tentativas de login
+#define TEMPO_LIMITE 30   // Limite de tempo em segundos para cada jogada
+#define ATUALIZAR_TEMPO 5 // Atualizar a exibição do tempo a cada 5 segundos
 
 typedef struct {
     char nome[MAX_NAME_LEN];
@@ -46,6 +49,7 @@ void trocarJogadores(Jogador *jogador1, Jogador *jogador2);
 int verificarCredenciais(const char *nome, const char *senha);
 void salvarCredenciais(const char *nome, const char *senha);
 void menuInicialJogador(Jogador *jogador, const char *numeroJogador);
+int lerJogadaComTemporizador(int *linha, int *coluna);
 
 int main() {
     SetConsoleOutputCP(CP_UTF8);
@@ -56,6 +60,7 @@ int main() {
     Jogo jogo;
     int linha, coluna, continuar, jogarMais;
     int sessaoAtiva = 1; // Variável para controlar a sessão do jogo
+    int tempoExcedido;
 
     // Login inicial (somente uma vez)
     printf("Bem-vindo ao Jogo da Velha!\n");
@@ -89,7 +94,38 @@ int main() {
             printf("Jogador %c (%s), faça sua jogada (linha coluna): ", 
                    jogo.jogadorAtual, 
                    jogo.jogadorAtual == 'X' ? jogador1.nome : jogador2.nome);
-            scanf("%d %d", &linha, &coluna);
+            
+            // Informar sobre o limite de tempo
+            printf("\nVocê tem %d segundos para fazer sua jogada.\n", TEMPO_LIMITE);
+            
+            // Usar o temporizador para ler a jogada
+            tempoExcedido = lerJogadaComTemporizador(&linha, &coluna);
+            
+            // Se o tempo foi excedido, o jogador atual perde
+            if (tempoExcedido) {
+                printf("\nTempo excedido! Jogador %c (%s) perdeu a partida!\n", 
+                       jogo.jogadorAtual, 
+                       jogo.jogadorAtual == 'X' ? jogador1.nome : jogador2.nome);
+                
+                // Incrementar partidas para ambos os jogadores
+                jogador1.partidas++;
+                jogador2.partidas++;
+                
+                // Atribuir vitória ao oponente e derrota ao jogador atual
+                if (jogo.jogadorAtual == 'X') {
+                    jogador2.vitorias++;
+                    jogador1.derrotas++;
+                } else {
+                    jogador1.vitorias++;
+                    jogador2.derrotas++;
+                }
+                
+                salvarEstatisticas(&jogador1);
+                salvarEstatisticas(&jogador2);
+                remove(PARTIDA_FILE);
+                partidaEmAndamento = 0; // Encerra a partida atual
+                continue;
+            }
 
             linha--;
             coluna--;
@@ -165,6 +201,50 @@ int main() {
     }
 
     return 0;
+}
+
+// Função para ler a jogada com temporizador (versão melhorada)
+int lerJogadaComTemporizador(int *linha, int *coluna) {
+    time_t inicio = time(NULL);
+    time_t ultimaAtualizacao = inicio;
+    time_t atual;
+    int segundosRestantes;
+    char buffer[10];
+    
+    // Usar scanf com timeout
+    printf("Digite linha e coluna (ex: 1 2): ");
+    fflush(stdout);
+    
+    while (1) {
+        // Verificar se há entrada disponível
+        if (_kbhit()) {
+            // Ler a entrada normalmente
+            scanf("%d %d", linha, coluna);
+            return 0; // Jogada feita dentro do tempo
+        }
+        
+        // Verificar o tempo
+        atual = time(NULL);
+        segundosRestantes = TEMPO_LIMITE - (int)(atual - inicio);
+        
+        // Atualizar a exibição do tempo apenas a cada ATUALIZAR_TEMPO segundos
+        // ou quando estiver nos últimos 10 segundos (atualização mais frequente)
+        if ((atual - ultimaAtualizacao >= ATUALIZAR_TEMPO) || 
+            (segundosRestantes <= 10 && atual - ultimaAtualizacao >= 1)) {
+            printf("\rTempo restante: %2d segundos. Digite linha e coluna: ", segundosRestantes);
+            fflush(stdout);
+            ultimaAtualizacao = atual;
+        }
+        
+        // Verificar se o tempo acabou
+        if (segundosRestantes <= 0) {
+            printf("\nTempo esgotado!\n");
+            return 1; // Tempo excedido
+        }
+        
+        // Pequena pausa para não sobrecarregar a CPU
+        Sleep(100);
+    }
 }
 
 // Nova função para exibir o menu inicial para cada jogador
@@ -295,6 +375,8 @@ void reiniciarJogo(Jogo *jogo, Jogador *jogador1, Jogador *jogador2) {
     } else {
         printf("Placar empatado! Quem vai desempatar?\n");
     }
+    printf("===================================\n");
+    printf("ATENÇÃO: Cada jogador tem %d segundos para fazer sua jogada!\n", TEMPO_LIMITE);
     printf("===================================\n\n");
 }
 
