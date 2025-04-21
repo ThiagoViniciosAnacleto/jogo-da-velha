@@ -18,3 +18,37 @@ Matheus 4 0 0 0
  2 0 0 0
  3 1 0 0
  2 0 0 0
+ 3 1 0 0
+ 2 0 0 0
+ 3 1 0 0
+ 2 0 0 0
+ 3 1 0 0
+ 2 0 0 0
+ 3 1 0 0
+ 2 0 0 0
+ 3 1 0 0
+ 2 0 0 0
+ 3 1 0 0
+ 2 0 0 0
+ 3 1 0 0
+ 2 0 0 0
+ 3 1 0 0
+ 2 0 0 0
+ 3 1 0 0
+ 2 0 0 0
+Thiago - Partidas: 3, Vitorias: 1, Empates: 0, Derrotas: 0
+Matheus - Partidas: 2, Vitorias: 0, Empates: 0, Derrotas: 0
+Thiago - Partidas: 6, Vitorias: 2, Empates: 0, Derrotas: 0
+Matheus - Partidas: 4, Vitorias: 0, Empates: 0, Derrotas: 0
+Thiago - Partidas: 9, Vitorias: 3, Empates: 0, Derrotas: 0
+Matheus - Partidas: 6, Vitorias: 0, Empates: 0, Derrotas: 0
+Thiago - Partidas: 12, Vitorias: 4, Empates: 0, Derrotas: 0
+Matheus - Partidas: 8, Vitorias: 0, Empates: 0, Derrotas: 1
+Thiago - Partidas: 15, Vitorias: 5, Empates: 0, Derrotas: 0
+Matheus - Partidas: 10, Vitorias: 0, Empates: 0, Derrotas: 2
+Thiago - Partidas: 15, Vitorias: 5, Empates: 0, Derrotas: 0
+Matheus - Partidas: 10, Vitorias: 0, Empates: 0, Derrotas: 2
+Thiago - Partidas: 18, Vitorias: 6, Empates: 0, Derrotas: 0
+Jose - Partidas: 2, Vitorias: 0, Empates: 0, Derrotas: 1
+Thiago - Partidas: 21, Vitorias: 7, Empates: 0, Derrotas: 0
+Jose - Partidas: 4, Vitorias: 0, Empates: 0, Derrotas: 2
