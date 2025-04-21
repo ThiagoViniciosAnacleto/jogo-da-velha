@@ -6,6 +6,7 @@
 #include <locale.h>
 
 #define MAX_NAME_LEN 50
+#define MAX_PASS_LEN 50
 #define FILENAME "jogo_estatisticas.txt"
 #define MAX_PLAYERS 100
 #define LOGIN_FILE "logins.txt"
@@ -40,6 +41,8 @@ void mascararSenha(char *senha);
 void mostrarMenuFinal(int *opcao);
 void reiniciarJogo(Jogo *jogo, Jogador *jogador1, Jogador *jogador2);
 void trocarJogadores(Jogador *jogador1, Jogador *jogador2);
+int verificarCredenciais(const char *nome, const char *senha);
+void salvarCredenciais(const char *nome, const char *senha);
 
 int main() {
     SetConsoleOutputCP(CP_UTF8);
@@ -385,20 +388,107 @@ void carregarEstatisticas(Jogador *jogador) {
     }
 }
 
+// Verifica se as credenciais existem no arquivo de login
+int verificarCredenciais(const char *nome, const char *senha) {
+    FILE *arquivo = fopen(LOGIN_FILE, "r");
+    if (!arquivo) return 0;
+    
+    char linha[MAX_NAME_LEN + MAX_PASS_LEN + 2]; // +2 para o separador e \0
+    char nomeArquivo[MAX_NAME_LEN];
+    char senhaArquivo[MAX_PASS_LEN];
+    
+    while (fgets(linha, sizeof(linha), arquivo)) {
+        // Remover quebra de linha
+        linha[strcspn(linha, "\n")] = '\0';
+        
+        // Separar nome e senha
+        if (sscanf(linha, "%[^,],%s", nomeArquivo, senhaArquivo) == 2) {
+            if (strcmp(nome, nomeArquivo) == 0 && strcmp(senha, senhaArquivo) == 0) {
+                fclose(arquivo);
+                return 1; // Credenciais válidas
+            }
+        }
+    }
+    
+    fclose(arquivo);
+    return 0; // Credenciais inválidas
+}
+
+// Salva as credenciais no arquivo de login
+void salvarCredenciais(const char *nome, const char *senha) {
+    FILE *arquivo = fopen(LOGIN_FILE, "a");
+    if (arquivo) {
+        fprintf(arquivo, "%s,%s\n", nome, senha);
+        fclose(arquivo);
+    }
+}
+
 void realizarLogin(Jogador *jogador) {
     char nome[MAX_NAME_LEN];
-    char senha[MAX_NAME_LEN];
+    char senha[MAX_PASS_LEN];
+    int tentativas = 0;
+    int opcao;
+    
     printf("Digite seu nome: ");
     fgets(nome, MAX_NAME_LEN, stdin);
     nome[strcspn(nome, "\n")] = '\0'; // Remove a nova linha
+    
     printf("Digite sua senha: ");
     mascararSenha(senha);
-    // Aqui seria possível verificar o login usando arquivos ou banco de dados, mas estamos simplificando.
-    strcpy(jogador->nome, nome);
+    
+    // Verificar se as credenciais existem
+    if (verificarCredenciais(nome, senha)) {
+        printf("Login realizado com sucesso!\n");
+        strcpy(jogador->nome, nome);
+    } else {
+        printf("Credenciais inválidas ou usuário não encontrado.\n");
+        
+        // Perguntar se deseja registrar um novo usuário
+        printf("Deseja registrar um novo usuário? (1 - Sim, 2 - Não): ");
+        scanf("%d", &opcao);
+        getchar(); // Limpa buffer
+        
+        if (opcao == 1) {
+            printf("Digite um nome de usuário: ");
+            fgets(nome, MAX_NAME_LEN, stdin);
+            nome[strcspn(nome, "\n")] = '\0';
+            
+            printf("Digite uma senha: ");
+            mascararSenha(senha);
+            
+            // Salvar as novas credenciais
+            salvarCredenciais(nome, senha);
+            
+            printf("Usuário registrado com sucesso!\n");
+            strcpy(jogador->nome, nome);
+        } else {
+            // Se não quiser registrar, usar um nome temporário
+            printf("Digite um nome para jogar sem registro: ");
+            fgets(nome, MAX_NAME_LEN, stdin);
+            nome[strcspn(nome, "\n")] = '\0';
+            strcpy(jogador->nome, nome);
+        }
+    }
 }
 
 void registrarJogador(Jogador *jogador) {
-    printf("Jogador %s registrado com sucesso!\n", jogador->nome);
+    char senha[MAX_PASS_LEN];
+    int opcao;
+    
+    printf("Deseja registrar este jogador com senha? (1 - Sim, 0 - Não): ");
+    scanf("%d", &opcao);
+    getchar(); // Limpa buffer
+    
+    if (opcao == 1) {
+        printf("Digite uma senha para o jogador %s: ", jogador->nome);
+        mascararSenha(senha);
+        
+        // Salvar as credenciais
+        salvarCredenciais(jogador->nome, senha);
+        printf("Jogador %s registrado com sucesso!\n", jogador->nome);
+    } else {
+        printf("Jogador %s registrado sem senha.\n", jogador->nome);
+    }
 }
 
 void mascararSenha(char *senha) {
