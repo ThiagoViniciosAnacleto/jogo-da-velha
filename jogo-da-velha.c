@@ -223,7 +223,6 @@ void registrarNovoJogador(Jogador *jogador) {
 
 void trocarJogadores(Jogador *jogador1, Jogador *jogador2) {
     int opcao;
-    char buffer[MAX_NAME_LEN];
     
     // Salvar estatísticas dos jogadores atuais antes de trocar
     salvarEstatisticas(jogador1);
