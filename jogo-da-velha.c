@@ -117,8 +117,6 @@ int main() {
 
             if (realizarJogada(jogo.tabuleiro, linha, coluna, jogo.jogadorAtual)) {
                 // Removido o incremento de partidas a cada jogada
-                // if (jogo.jogadorAtual == 'X') jogador1.partidas++;
-                // else jogador2.partidas++;
 
                 if (verificarVitoria(jogo.tabuleiro)) {
                     exibirTabuleiro(jogo.tabuleiro); // Mostrar o tabuleiro final
@@ -348,7 +346,8 @@ void salvarPartida(Jogo *jogo) {
 void salvarEstatisticas(Jogador *jogador) {
     FILE *arquivo = fopen(FILENAME, "a");
     if (arquivo) {
-        fprintf(arquivo, "%s - Partidas: %d, Vitorias: %d, Empates: %d, Derrotas: %d\n",
+        // Novo formato: "Nome, partidas, vitorias, empates, derrotas;"
+        fprintf(arquivo, "%s, %d, %d, %d, %d;\n",
                 jogador->nome, jogador->partidas, jogador->vitorias, jogador->empates, jogador->derrotas);
         fclose(arquivo);
     }
@@ -359,9 +358,27 @@ void carregarEstatisticas(Jogador *jogador) {
     if (arquivo) {
         char linha[100];
         while (fgets(linha, sizeof(linha), arquivo)) {
+            // Verificar se a linha contém o nome do jogador
             if (strstr(linha, jogador->nome)) {
-                sscanf(linha, "%s - Partidas: %d, Vitorias: %d, Empates: %d, Derrotas: %d",
-                       jogador->nome, &jogador->partidas, &jogador->vitorias, &jogador->empates, &jogador->derrotas);
+                // Tentar ler no novo formato primeiro
+                char nome[MAX_NAME_LEN];
+                int partidas, vitorias, empates, derrotas;
+                
+                // Novo formato: "Nome, partidas, vitorias, empates, derrotas;"
+                if (sscanf(linha, "%[^,], %d, %d, %d, %d;", 
+                          nome, &partidas, &vitorias, &empates, &derrotas) == 5) {
+                    strcpy(jogador->nome, nome);
+                    jogador->partidas = partidas;
+                    jogador->vitorias = vitorias;
+                    jogador->empates = empates;
+                    jogador->derrotas = derrotas;
+                } 
+                // Tentar ler no formato antigo como fallback
+                else if (sscanf(linha, "%s - Partidas: %d, Vitorias: %d, Empates: %d, Derrotas: %d",
+                              jogador->nome, &jogador->partidas, &jogador->vitorias, 
+                              &jogador->empates, &jogador->derrotas) == 5) {
+                    // Dados já foram carregados pelo sscanf
+                }
             }
         }
         fclose(arquivo);
