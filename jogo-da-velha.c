@@ -37,6 +37,7 @@ void carregarEstatisticas(Jogador *jogador);
 void salvarPartida(Jogo *jogo);
 void carregarPartida(Jogo *jogo);
 void realizarLogin(Jogador *jogador);
+void registrarNovoJogador(Jogador *jogador);
 void registrarJogador(Jogador *jogador);
 void mascararSenha(char *senha);
 void mostrarMenuFinal(int *opcao);
@@ -44,6 +45,7 @@ void reiniciarJogo(Jogo *jogo, Jogador *jogador1, Jogador *jogador2);
 void trocarJogadores(Jogador *jogador1, Jogador *jogador2);
 int verificarCredenciais(const char *nome, const char *senha);
 void salvarCredenciais(const char *nome, const char *senha);
+void menuInicialJogador(Jogador *jogador, const char *numeroJogador);
 
 int main() {
     SetConsoleOutputCP(CP_UTF8);
@@ -52,39 +54,17 @@ int main() {
     Jogador jogador1 = {"", 0, 0, 0, 0};
     Jogador jogador2 = {"", 0, 0, 0, 0};
     Jogo jogo;
-    int opcao, linha, coluna, continuar, jogarMais;
+    int linha, coluna, continuar, jogarMais;
     int sessaoAtiva = 1; // Variável para controlar a sessão do jogo
 
     // Login inicial (somente uma vez)
     printf("Bem-vindo ao Jogo da Velha!\n");
 
-    // Login para jogador 1
-    printf("Jogador 1 - Deseja fazer login? (1 - Sim, 2 - Não): ");
-    scanf("%d", &opcao);
-    getchar(); // Limpa buffer
-
-    if (opcao == 1) {
-        realizarLogin(&jogador1);
-    } else {
-        printf("Digite o nome do Jogador 1: ");
-        fgets(jogador1.nome, MAX_NAME_LEN, stdin);
-        jogador1.nome[strcspn(jogador1.nome, "\n")] = '\0';
-        registrarJogador(&jogador1);
-    }
-
-    // Login para jogador 2
-    printf("Jogador 2 - Deseja fazer login? (1 - Sim, 2 - Não): ");
-    scanf("%d", &opcao);
-    getchar(); // Limpa buffer
-
-    if (opcao == 1) {
-        realizarLogin(&jogador2);
-    } else {
-        printf("Digite o nome do Jogador 2: ");
-        fgets(jogador2.nome, MAX_NAME_LEN, stdin);
-        jogador2.nome[strcspn(jogador2.nome, "\n")] = '\0';
-        registrarJogador(&jogador2);
-    }
+    // Menu inicial para jogador 1
+    menuInicialJogador(&jogador1, "1");
+    
+    // Menu inicial para jogador 2
+    menuInicialJogador(&jogador2, "2");
 
     carregarEstatisticas(&jogador1);
     carregarEstatisticas(&jogador2);
@@ -187,6 +167,60 @@ int main() {
     return 0;
 }
 
+// Nova função para exibir o menu inicial para cada jogador
+void menuInicialJogador(Jogador *jogador, const char *numeroJogador) {
+    int opcao;
+    
+    printf("\n=== Jogador %s ===\n", numeroJogador);
+    printf("1 - Fazer login (já tenho cadastro)\n");
+    printf("2 - Criar nova conta\n");
+    printf("3 - Jogar sem cadastro\n");
+    printf("Escolha uma opção: ");
+    scanf("%d", &opcao);
+    getchar(); // Limpa buffer
+    
+    switch (opcao) {
+        case 1:
+            realizarLogin(jogador);
+            break;
+        case 2:
+            registrarNovoJogador(jogador);
+            break;
+        case 3:
+            printf("Digite o nome do Jogador %s: ", numeroJogador);
+            fgets(jogador->nome, MAX_NAME_LEN, stdin);
+            jogador->nome[strcspn(jogador->nome, "\n")] = '\0';
+            printf("Jogador %s registrado sem cadastro.\n", jogador->nome);
+            break;
+        default:
+            printf("Opção inválida! Jogando sem cadastro.\n");
+            printf("Digite o nome do Jogador %s: ", numeroJogador);
+            fgets(jogador->nome, MAX_NAME_LEN, stdin);
+            jogador->nome[strcspn(jogador->nome, "\n")] = '\0';
+            break;
+    }
+}
+
+// Nova função para registrar um novo jogador com senha
+void registrarNovoJogador(Jogador *jogador) {
+    char nome[MAX_NAME_LEN];
+    char senha[MAX_PASS_LEN];
+    
+    printf("=== Criação de Nova Conta ===\n");
+    printf("Digite um nome de usuário: ");
+    fgets(nome, MAX_NAME_LEN, stdin);
+    nome[strcspn(nome, "\n")] = '\0';
+    
+    printf("Digite uma senha: ");
+    mascararSenha(senha);
+    
+    // Salvar as novas credenciais
+    salvarCredenciais(nome, senha);
+    
+    printf("Conta criada com sucesso!\n");
+    strcpy(jogador->nome, nome);
+}
+
 void trocarJogadores(Jogador *jogador1, Jogador *jogador2) {
     int opcao;
     char buffer[MAX_NAME_LEN];
@@ -207,19 +241,8 @@ void trocarJogadores(Jogador *jogador1, Jogador *jogador2) {
         // Reinicializar o jogador 1
         memset(jogador1, 0, sizeof(Jogador));
         
-        printf("Novo Jogador 1 - Deseja fazer login? (1 - Sim, 2 - Não): ");
-        scanf("%d", &opcao);
-        getchar(); // Limpa buffer
-        
-        if (opcao == 1) {
-            realizarLogin(jogador1);
-        } else {
-            printf("Digite o nome do novo Jogador 1: ");
-            fgets(buffer, MAX_NAME_LEN, stdin);
-            buffer[strcspn(buffer, "\n")] = '\0';
-            strcpy(jogador1->nome, buffer);
-            registrarJogador(jogador1);
-        }
+        // Usar o novo menu inicial para o jogador 1
+        menuInicialJogador(jogador1, "1");
         
         // Carregar estatísticas do novo jogador 1, se existirem
         carregarEstatisticas(jogador1);
@@ -235,19 +258,8 @@ void trocarJogadores(Jogador *jogador1, Jogador *jogador2) {
         // Reinicializar o jogador 2
         memset(jogador2, 0, sizeof(Jogador));
         
-        printf("Novo Jogador 2 - Deseja fazer login? (1 - Sim, 2 - Não): ");
-        scanf("%d", &opcao);
-        getchar(); // Limpa buffer
-        
-        if (opcao == 1) {
-            realizarLogin(jogador2);
-        } else {
-            printf("Digite o nome do novo Jogador 2: ");
-            fgets(buffer, MAX_NAME_LEN, stdin);
-            buffer[strcspn(buffer, "\n")] = '\0';
-            strcpy(jogador2->nome, buffer);
-            registrarJogador(jogador2);
-        }
+        // Usar o novo menu inicial para o jogador 2
+        menuInicialJogador(jogador2, "2");
         
         // Carregar estatísticas do novo jogador 2, se existirem
         carregarEstatisticas(jogador2);
@@ -430,6 +442,8 @@ void realizarLogin(Jogador *jogador) {
     int tentativas = 0;
     int opcao;
     
+    printf("=== Login de Usuário ===\n");
+    
     // Implementação do limite de tentativas de login
     do {
         printf("Digite seu nome: ");
@@ -447,8 +461,17 @@ void realizarLogin(Jogador *jogador) {
         } else {
             tentativas++;
             if (tentativas < MAX_TENTATIVAS) {
-                printf("Credenciais inválidas. Tentativa %d/%d. Tente novamente.\n", 
-                       tentativas, MAX_TENTATIVAS);
+                printf("Credenciais inválidas. Tentativa %d/%d.\n", tentativas, MAX_TENTATIVAS);
+                printf("1 - Tentar novamente\n");
+                printf("2 - Criar nova conta\n");
+                printf("Escolha uma opção: ");
+                scanf("%d", &opcao);
+                getchar(); // Limpa buffer
+                
+                if (opcao == 2) {
+                    registrarNovoJogador(jogador);
+                    return;
+                }
             }
         }
     } while (tentativas < MAX_TENTATIVAS);
@@ -457,26 +480,17 @@ void realizarLogin(Jogador *jogador) {
     printf("Número máximo de tentativas excedido.\n");
     
     // Perguntar se deseja registrar um novo usuário
-    printf("Deseja registrar um novo usuário? (1 - Sim, 2 - Não): ");
+    printf("1 - Criar nova conta\n");
+    printf("2 - Jogar sem cadastro\n");
+    printf("Escolha uma opção: ");
     scanf("%d", &opcao);
     getchar(); // Limpa buffer
     
     if (opcao == 1) {
-        printf("Digite um nome de usuário: ");
-        fgets(nome, MAX_NAME_LEN, stdin);
-        nome[strcspn(nome, "\n")] = '\0';
-        
-        printf("Digite uma senha: ");
-        mascararSenha(senha);
-        
-        // Salvar as novas credenciais
-        salvarCredenciais(nome, senha);
-        
-        printf("Usuário registrado com sucesso!\n");
-        strcpy(jogador->nome, nome);
+        registrarNovoJogador(jogador);
     } else {
         // Se não quiser registrar, usar um nome temporário
-        printf("Digite um nome para jogar sem registro: ");
+        printf("Digite um nome para jogar sem cadastro: ");
         fgets(nome, MAX_NAME_LEN, stdin);
         nome[strcspn(nome, "\n")] = '\0';
         strcpy(jogador->nome, nome);
