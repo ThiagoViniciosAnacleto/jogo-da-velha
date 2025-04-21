@@ -37,43 +37,61 @@ void carregarPartida(Jogo *jogo);
 void realizarLogin(Jogador *jogador);
 void registrarJogador(Jogador *jogador);
 void mascararSenha(char *senha);
-int jogarNovamente();
+void mostrarMenuFinal(int *opcao);
+void reiniciarJogo(Jogo *jogo, Jogador *jogador1, Jogador *jogador2);
 
 int main() {
     SetConsoleOutputCP(CP_UTF8);
     setlocale(LC_ALL, "Portuguese_Brasil");
 
-    Jogador jogador = {"", 0, 0, 0, 0};
+    Jogador jogador1 = {"", 0, 0, 0, 0};
+    Jogador jogador2 = {"", 0, 0, 0, 0};
     Jogo jogo;
-    int opcao, linha, coluna, continuar;
+    int opcao, linha, coluna, continuar, jogarMais;
 
-    do {
+    while (1) {
+        // Menu principal - A cada novo ciclo, o login será requisitado
         printf("Bem-vindo ao Jogo da Velha!\n");
-        printf("Deseja fazer login? (1 - Sim, 2 - Não): ");
+
+        // Login para jogador 1
+        printf("Jogador 1 - Deseja fazer login? (1 - Sim, 2 - Não): ");
         scanf("%d", &opcao);
         getchar(); // Limpa buffer
 
         if (opcao == 1) {
-            realizarLogin(&jogador);
+            realizarLogin(&jogador1);
         } else {
-            printf("Digite seu nome: ");
-            fgets(jogador.nome, MAX_NAME_LEN, stdin);
-            jogador.nome[strcspn(jogador.nome, "\n")] = '\0';
-            registrarJogador(&jogador);
+            printf("Digite o nome do Jogador 1: ");
+            fgets(jogador1.nome, MAX_NAME_LEN, stdin);
+            jogador1.nome[strcspn(jogador1.nome, "\n")] = '\0';
+            registrarJogador(&jogador1);
         }
 
-        carregarEstatisticas(&jogador);
+        // Login para jogador 2
+        printf("Jogador 2 - Deseja fazer login? (1 - Sim, 2 - Não): ");
+        scanf("%d", &opcao);
+        getchar(); // Limpa buffer
+
+        if (opcao == 1) {
+            realizarLogin(&jogador2);
+        } else {
+            printf("Digite o nome do Jogador 2: ");
+            fgets(jogador2.nome, MAX_NAME_LEN, stdin);
+            jogador2.nome[strcspn(jogador2.nome, "\n")] = '\0';
+            registrarJogador(&jogador2);
+        }
+
+        carregarEstatisticas(&jogador1);
+        carregarEstatisticas(&jogador2);
 
         if (verificarPartidaNaoFinalizada(&jogo)) {
             printf("Partida anterior não finalizada, deseja continuar? (1 - Sim, 2 - Não): ");
             scanf("%d", &continuar);
             if (continuar != 1) {
-                limparTabuleiro(jogo.tabuleiro);
-                jogo.jogadorAtual = 'X';
+                reiniciarJogo(&jogo, &jogador1, &jogador2);  // Reinicia tudo se a partida não for continuada
             }
         } else {
-            limparTabuleiro(jogo.tabuleiro);
-            jogo.jogadorAtual = 'X';
+            reiniciarJogo(&jogo, &jogador1, &jogador2);  // Inicializa o jogo
         }
 
         while (1) {
@@ -90,18 +108,23 @@ int main() {
             }
 
             if (realizarJogada(jogo.tabuleiro, linha, coluna, jogo.jogadorAtual)) {
-                jogador.partidas++;
+                if (jogo.jogadorAtual == 'X') jogador1.partidas++;
+                else jogador2.partidas++;
+
                 if (verificarVitoria(jogo.tabuleiro)) {
                     printf("Jogador %c venceu!\n", jogo.jogadorAtual);
-                    if (jogo.jogadorAtual == 'X') jogador.vitorias++;
-                    else jogador.derrotas++;
-                    salvarEstatisticas(&jogador);
+                    if (jogo.jogadorAtual == 'X') jogador1.vitorias++;
+                    else jogador2.vitorias++;
+                    salvarEstatisticas(&jogador1);
+                    salvarEstatisticas(&jogador2);
                     remove(PARTIDA_FILE);
                     break;
                 } else if (verificarEmpate(jogo.tabuleiro)) {
                     printf("Empate!\n");
-                    jogador.empates++;
-                    salvarEstatisticas(&jogador);
+                    jogador1.empates++;
+                    jogador2.empates++;
+                    salvarEstatisticas(&jogador1);
+                    salvarEstatisticas(&jogador2);
                     remove(PARTIDA_FILE);
                     break;
                 }
@@ -113,13 +136,30 @@ int main() {
             salvarPartida(&jogo);
         }
 
-        if (!jogarNovamente()) {
-            break;
-        }
+        // Menu final: opções para jogar novamente, voltar ao início ou encerrar
+        mostrarMenuFinal(&jogarMais);
 
-    } while (1);
+        if (jogarMais == 1) {
+            continue; // Jogo segue para mais uma partida
+        } else if (jogarMais == 2) {
+            reiniciarJogo(&jogo, &jogador1, &jogador2); // Reinicia o jogo e volta ao início
+            printf("\nVoltando ao início...\n");
+            continue; // Volta ao início, solicitando login novamente
+        } else {
+            printf("Jogo encerrado. Até logo!\n");
+            break; // Encerra o jogo
+        }
+    }
 
     return 0;
+}
+
+void reiniciarJogo(Jogo *jogo, Jogador *jogador1, Jogador *jogador2) {
+    memset(jogo, 0, sizeof(Jogo)); // Zera o estado do jogo
+    memset(jogador1, 0, sizeof(Jogador)); // Zera o estado do jogador 1
+    memset(jogador2, 0, sizeof(Jogador)); // Zera o estado do jogador 2
+    limparTabuleiro(jogo->tabuleiro);
+    jogo->jogadorAtual = 'X';  // Jogador 1 começa
 }
 
 void limparTabuleiro(char tabuleiro[3][3]) {
@@ -204,72 +244,58 @@ void carregarEstatisticas(Jogador *jogador) {
 }
 
 void realizarLogin(Jogador *jogador) {
+    char senha[50], senhaArquivo[50];
+    printf("Digite o nome de usuário: ");
+    fgets(jogador->nome, MAX_NAME_LEN, stdin);
+    jogador->nome[strcspn(jogador->nome, "\n")] = '\0';
+    printf("Digite a senha: ");
+    mascararSenha(senha);
     FILE *arquivo = fopen(LOGIN_FILE, "r");
     if (!arquivo) {
-        printf("Arquivo de login não encontrado.\n");
+        printf("Erro ao acessar o arquivo de login.\n");
         return;
     }
-    char nome[MAX_NAME_LEN], senha[20];
-    char linha[MAX_NAME_LEN + 30];
-    int found = 0;
-
-    printf("Digite seu nome: ");
-    fgets(nome, MAX_NAME_LEN, stdin);
-    nome[strcspn(nome, "\n")] = '\0';
-
-    printf("Digite sua senha: ");
-    mascararSenha(senha);
-
-    while (fgets(linha, sizeof(linha), arquivo)) {
-        char storedName[MAX_NAME_LEN], storedPass[20];
-        sscanf(linha, "%s %s", storedName, storedPass);
-        if (strcmp(nome, storedName) == 0 && strcmp(senha, storedPass) == 0) {
-            strcpy(jogador->nome, nome);
-            found = 1;
-            break;
+    while (fscanf(arquivo, "%s %s", jogador->nome, senhaArquivo) != EOF) {
+        if (strcmp(jogador->nome, jogador->nome) == 0 && strcmp(senha, senhaArquivo) == 0) {
+            printf("Login bem-sucedido!\n");
+            fclose(arquivo);
+            return;
         }
     }
     fclose(arquivo);
-
-    if (!found) {
-        printf("Login não encontrado. Registrando novo jogador.\n");
-        strcpy(jogador->nome, nome);
-        jogador->partidas = 0;
-        jogador->vitorias = 0;
-        jogador->empates = 0;
-        jogador->derrotas = 0;
-        registrarJogador(jogador);
-    }
+    printf("Falha no login. Usuário ou senha incorretos.\n");
 }
 
 void registrarJogador(Jogador *jogador) {
     FILE *arquivo = fopen(LOGIN_FILE, "a");
-    char senha[20];
-    printf("Digite a senha para registrar: ");
-    mascararSenha(senha);
-    fprintf(arquivo, "%s %s\n", jogador->nome, senha);
+    if (!arquivo) {
+        printf("Erro ao acessar o arquivo de login.\n");
+        return;
+    }
+    fprintf(arquivo, "%s %s\n", jogador->nome, jogador->nome);  // senha igual ao nome
     fclose(arquivo);
 }
 
 void mascararSenha(char *senha) {
-    int i = 0;
     char ch;
+    int i = 0;
     while ((ch = _getch()) != '\r') {
-        if (ch == 8 && i > 0) {
+        if (ch == 8 && i > 0) {  // backspace
             i--;
-            printf("\b \b");
+            printf("\b \b");  // Remove a última estrela
         } else if (ch != 8) {
             senha[i++] = ch;
             printf("*");
         }
     }
-    senha[i] = '\0';
-    printf("\n");
+    senha[i] = '\0';  // Termina a string
 }
 
-int jogarNovamente() {
-    int opcao;
-    printf("\nDeseja jogar novamente? (1 - Sim, 2 - Não): ");
-    scanf("%d", &opcao);
-    return opcao == 1;
+void mostrarMenuFinal(int *opcao) {
+    printf("\nMenu Final\n");
+    printf("1. Jogar novamente\n");
+    printf("2. Voltar ao início\n");
+    printf("3. Sair\n");
+    printf("Escolha uma opção: ");
+    scanf("%d", opcao);
 }
