@@ -209,7 +209,6 @@ int lerJogadaComTemporizador(int *linha, int *coluna) {
     time_t ultimaAtualizacao = inicio;
     time_t atual;
     int segundosRestantes;
-    char buffer[10];
     
     // Usar scanf com timeout
     printf("Digite linha e coluna (ex: 1 2): ");
