@@ -11,6 +11,7 @@
 #define MAX_PLAYERS 100
 #define LOGIN_FILE "logins.txt"
 #define PARTIDA_FILE "partida_em_andamento.txt"
+#define MAX_TENTATIVAS 3  // Constante para o número máximo de tentativas de login
 
 typedef struct {
     char nome[MAX_NAME_LEN];
@@ -426,47 +427,59 @@ void salvarCredenciais(const char *nome, const char *senha) {
 void realizarLogin(Jogador *jogador) {
     char nome[MAX_NAME_LEN];
     char senha[MAX_PASS_LEN];
+    int tentativas = 0;
     int opcao;
     
-    printf("Digite seu nome: ");
-    fgets(nome, MAX_NAME_LEN, stdin);
-    nome[strcspn(nome, "\n")] = '\0'; // Remove a nova linha
+    // Implementação do limite de tentativas de login
+    do {
+        printf("Digite seu nome: ");
+        fgets(nome, MAX_NAME_LEN, stdin);
+        nome[strcspn(nome, "\n")] = '\0'; // Remove a nova linha
+        
+        printf("Digite sua senha: ");
+        mascararSenha(senha);
+        
+        // Verificar se as credenciais existem
+        if (verificarCredenciais(nome, senha)) {
+            printf("Login realizado com sucesso!\n");
+            strcpy(jogador->nome, nome);
+            return; // Sai da função se o login for bem-sucedido
+        } else {
+            tentativas++;
+            if (tentativas < MAX_TENTATIVAS) {
+                printf("Credenciais inválidas. Tentativa %d/%d. Tente novamente.\n", 
+                       tentativas, MAX_TENTATIVAS);
+            }
+        }
+    } while (tentativas < MAX_TENTATIVAS);
     
-    printf("Digite sua senha: ");
-    mascararSenha(senha);
+    // Se chegou aqui, é porque excedeu o número máximo de tentativas
+    printf("Número máximo de tentativas excedido.\n");
     
-    // Verificar se as credenciais existem
-    if (verificarCredenciais(nome, senha)) {
-        printf("Login realizado com sucesso!\n");
+    // Perguntar se deseja registrar um novo usuário
+    printf("Deseja registrar um novo usuário? (1 - Sim, 2 - Não): ");
+    scanf("%d", &opcao);
+    getchar(); // Limpa buffer
+    
+    if (opcao == 1) {
+        printf("Digite um nome de usuário: ");
+        fgets(nome, MAX_NAME_LEN, stdin);
+        nome[strcspn(nome, "\n")] = '\0';
+        
+        printf("Digite uma senha: ");
+        mascararSenha(senha);
+        
+        // Salvar as novas credenciais
+        salvarCredenciais(nome, senha);
+        
+        printf("Usuário registrado com sucesso!\n");
         strcpy(jogador->nome, nome);
     } else {
-        printf("Credenciais inválidas ou usuário não encontrado.\n");
-        
-        // Perguntar se deseja registrar um novo usuário
-        printf("Deseja registrar um novo usuário? (1 - Sim, 2 - Não): ");
-        scanf("%d", &opcao);
-        getchar(); // Limpa buffer
-        
-        if (opcao == 1) {
-            printf("Digite um nome de usuário: ");
-            fgets(nome, MAX_NAME_LEN, stdin);
-            nome[strcspn(nome, "\n")] = '\0';
-            
-            printf("Digite uma senha: ");
-            mascararSenha(senha);
-            
-            // Salvar as novas credenciais
-            salvarCredenciais(nome, senha);
-            
-            printf("Usuário registrado com sucesso!\n");
-            strcpy(jogador->nome, nome);
-        } else {
-            // Se não quiser registrar, usar um nome temporário
-            printf("Digite um nome para jogar sem registro: ");
-            fgets(nome, MAX_NAME_LEN, stdin);
-            nome[strcspn(nome, "\n")] = '\0';
-            strcpy(jogador->nome, nome);
-        }
+        // Se não quiser registrar, usar um nome temporário
+        printf("Digite um nome para jogar sem registro: ");
+        fgets(nome, MAX_NAME_LEN, stdin);
+        nome[strcspn(nome, "\n")] = '\0';
+        strcpy(jogador->nome, nome);
     }
 }
 
