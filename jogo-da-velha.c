@@ -116,14 +116,20 @@ int main() {
             }
 
             if (realizarJogada(jogo.tabuleiro, linha, coluna, jogo.jogadorAtual)) {
-                if (jogo.jogadorAtual == 'X') jogador1.partidas++;
-                else jogador2.partidas++;
+                // Removido o incremento de partidas a cada jogada
+                // if (jogo.jogadorAtual == 'X') jogador1.partidas++;
+                // else jogador2.partidas++;
 
                 if (verificarVitoria(jogo.tabuleiro)) {
                     exibirTabuleiro(jogo.tabuleiro); // Mostrar o tabuleiro final
                     printf("Jogador %c (%s) venceu!\n", 
                            jogo.jogadorAtual, 
                            jogo.jogadorAtual == 'X' ? jogador1.nome : jogador2.nome);
+                    
+                    // Incrementar partidas para ambos os jogadores ao final da partida
+                    jogador1.partidas++;
+                    jogador2.partidas++;
+                    
                     if (jogo.jogadorAtual == 'X') {
                         jogador1.vitorias++;
                         jogador2.derrotas++;
@@ -138,6 +144,11 @@ int main() {
                 } else if (verificarEmpate(jogo.tabuleiro)) {
                     exibirTabuleiro(jogo.tabuleiro); // Mostrar o tabuleiro final
                     printf("Empate!\n");
+                    
+                    // Incrementar partidas para ambos os jogadores ao final da partida
+                    jogador1.partidas++;
+                    jogador2.partidas++;
+                    
                     jogador1.empates++;
                     jogador2.empates++;
                     salvarEstatisticas(&jogador1);
@@ -246,9 +257,32 @@ void trocarJogadores(Jogador *jogador1, Jogador *jogador2) {
 }
 
 void reiniciarJogo(Jogo *jogo, Jogador *jogador1, Jogador *jogador2) {
-    memset(jogo, 0, sizeof(Jogo)); // Zera o estado do jogo
+    // Limpar o tabuleiro e reiniciar o jogo
+    memset(jogo, 0, sizeof(Jogo));
     limparTabuleiro(jogo->tabuleiro);
     jogo->jogadorAtual = 'X';  // Jogador 1 começa
+    
+    // Exibir mensagem personalizada com placar
+    printf("\n===================================\n");
+    printf("   NOVA PARTIDA DE JOGO DA VELHA   \n");
+    printf("===================================\n");
+    printf("%s (X) vs %s (O)\n", jogador1->nome, jogador2->nome);
+    printf("\nPLACAR ATUAL:\n");
+    printf("%-15s: %d partidas, %d vitórias, %d empates, %d derrotas\n", 
+           jogador1->nome, jogador1->partidas, jogador1->vitorias, jogador1->empates, jogador1->derrotas);
+    printf("%-15s: %d partidas, %d vitórias, %d empates, %d derrotas\n", 
+           jogador2->nome, jogador2->partidas, jogador2->vitorias, jogador2->empates, jogador2->derrotas);
+    printf("===================================\n");
+    
+    // Mensagem motivacional baseada nas estatísticas
+    if (jogador1->vitorias > jogador2->vitorias) {
+        printf("%s está na frente! %s, hora da revanche!\n", jogador1->nome, jogador2->nome);
+    } else if (jogador2->vitorias > jogador1->vitorias) {
+        printf("%s está na frente! %s, hora da revanche!\n", jogador2->nome, jogador1->nome);
+    } else {
+        printf("Placar empatado! Quem vai desempatar?\n");
+    }
+    printf("===================================\n\n");
 }
 
 void limparTabuleiro(char tabuleiro[3][3]) {
